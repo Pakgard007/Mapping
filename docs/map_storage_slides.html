@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>การเก็บ Map ด้วย LIO-SAM</title>
+  <style>
+    @page {
+      size: 13.333in 7.5in;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #17202a;
+      background: #eef1f4;
+      font-family: "Noto Sans Thai", "Noto Sans", "Tahoma", sans-serif;
+    }
+
+    .deck {
+      display: grid;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .slide {
+      position: relative;
+      width: 13.333in;
+      height: 7.5in;
+      overflow: hidden;
+      background: #fbfcfd;
+      border: 1px solid #d7dde3;
+      box-shadow: 0 18px 42px rgba(19, 32, 46, 0.14);
+      page-break-after: always;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(36, 100, 143, 0.09), transparent 36%),
+        linear-gradient(180deg, rgba(53, 103, 87, 0.08), transparent 40%);
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      height: 100%;
+      padding: 38px 50px 26px;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      color: #3b6672;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 9.5in;
+      font-size: 44px;
+      line-height: 1.16;
+      color: #132238;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.2;
+      color: #132238;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      max-width: 8.8in;
+      color: #405466;
+      font-size: 21px;
+      line-height: 1.45;
+    }
+
+    .main {
+      min-height: 0;
+      align-self: stretch;
+      display: grid;
+      align-items: start;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .node, .panel, .warning {
+      border: 1px solid #d8e0e6;
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .node {
+      min-height: 158px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 8px;
+    }
+
+    .num {
+      display: inline-grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #ffffff;
+      background: #24648f;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .node h3, .panel h3, .warning h3 {
+      margin: 0;
+      color: #18334a;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .node p, .panel p, .warning p, li {
+      margin: 0;
+      color: #405466;
+      font-size: 16.5px;
+      line-height: 1.45;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 24px;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .metric {
+      border-left: 5px solid #2b7a78;
+      background: #f5f9f8;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #18334a;
+      font-size: 17px;
+    }
+
+    .metric span {
+      color: #405466;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .save-box {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .code {
+      margin-top: 14px;
+      color: #102030;
+      background: #eef4f7;
+      border: 1px solid #d2e0e8;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font: 700 14.5px/1.45 "Noto Sans Mono", "Consolas", monospace;
+      word-break: break-word;
+    }
+
+    .warning {
+      border-color: #e6c88b;
+      background: #fff9ed;
+    }
+
+    .warning h3 {
+      color: #7a4d13;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: #6b7b87;
+      font-size: 14px;
+      border-top: 1px solid #dbe2e8;
+      padding-top: 10px;
+    }
+
+    .tag {
+      color: #ffffff;
+      background: #2b7a78;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .map-visual {
+      position: relative;
+      min-height: 214px;
+      border: 1px solid #d8e0e6;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 18% 22%, #2b7a78 0 3px, transparent 4px),
+        radial-gradient(circle at 26% 31%, #24648f 0 3px, transparent 4px),
+        radial-gradient(circle at 36% 19%, #2b7a78 0 3px, transparent 4px),
+        radial-gradient(circle at 50% 30%, #24648f 0 3px, transparent 4px),
+        radial-gradient(circle at 62% 22%, #2b7a78 0 3px, transparent 4px),
+        radial-gradient(circle at 73% 35%, #24648f 0 3px, transparent 4px),
+        radial-gradient(circle at 82% 24%, #2b7a78 0 3px, transparent 4px),
+        linear-gradient(135deg, #f5f8fa, #edf4f2);
+      overflow: hidden;
+    }
+
+    .route {
+      position: absolute;
+      inset: 42px 44px 58px;
+      border: 7px solid #2b7a78;
+      border-left-color: transparent;
+      border-radius: 48% 38% 44% 36%;
+      transform: rotate(-8deg);
+      opacity: 0.84;
+    }
+
+    .car {
+      position: absolute;
+      right: 108px;
+      bottom: 86px;
+      width: 52px;
+      height: 30px;
+      background: #24648f;
+      border-radius: 7px;
+      transform: rotate(-10deg);
+    }
+
+    .car::before, .car::after {
+      content: "";
+      position: absolute;
+      bottom: -7px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #17202a;
+    }
+
+    .car::before {
+      left: 7px;
+    }
+
+    .car::after {
+      right: 7px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .deck {
+        display: block;
+        padding: 0;
+      }
+
+      .slide {
+        border: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide">
+      <div class="content">
+        <header>
+          <div class="eyebrow">3D Mapping · Golf Cart ROS2</div>
+          <h1>การเก็บ Map คือการรวมข้อมูล LiDAR, IMU, GPS/RTK และความเร็วล้อให้กลายเป็นแผนที่จุด 3 มิติ</h1>
+          <p class="subtitle">ระบบนี้ใช้ LIO-SAM เป็นแกนหลัก สร้าง pose ของรถระหว่างวิ่ง แล้วสะสม point cloud ที่จัดแนวแล้วเป็น global map สำหรับ localization ภายหลัง</p>
+        </header>
+
+        <div class="main">
+          <div class="pipeline">
+            <article class="node">
+              <span class="num">1</span>
+              <h3>LiDAR Ouster</h3>
+              <p>ส่ง point cloud เข้า topic <strong>/ouster/points</strong> เป็นรูปทรงของถนน ต้นไม้ อาคาร และสิ่งกีดขวางรอบรถ</p>
+            </article>
+            <article class="node">
+              <span class="num">2</span>
+              <h3>IMU + Speed</h3>
+              <p>IMU ใช้คาดการณ์การหมุนและการเคลื่อนที่ ส่วน <strong>/speed_status</strong> ช่วยกด drift ตอนรถนิ่งหรือวิ่งช้า</p>
+            </article>
+            <article class="node">
+              <span class="num">3</span>
+              <h3>GPS/RTK</h3>
+              <p>รับ fix จาก u-blox และ correction จาก NTRIP เพื่อยึด map กับตำแหน่งจริง ลดการลอยสะสมเมื่อวิ่งระยะไกล</p>
+            </article>
+            <article class="node">
+              <span class="num">4</span>
+              <h3>LIO-SAM Map</h3>
+              <p>จัดแนว scan ต่อ scan เพิ่ม keyframe ทำ loop closure แล้วเก็บเป็น point cloud map ในหน่วยความจำ</p>
+            </article>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <span>Topic หลัก: /ouster/points, /ouster/imu, /ublox_gps_node/fix, /gps_odom, /speed_status</span>
+          <span class="tag">หน้า 1/3</span>
+        </footer>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <header>
+          <div class="eyebrow">สิ่งที่เกิดขึ้นระหว่างวิ่งเก็บแผนที่</div>
+          <h2>LIO-SAM ไม่ได้ “บันทึกไฟล์” ตลอดเวลา แต่สร้าง map ที่ปรับแก้แล้วอยู่ในหน่วยความจำก่อน</h2>
+        </header>
+
+        <div class="main flow">
+          <div class="stack">
+            <article class="panel">
+              <h3>1. แปลงข้อมูลดิบเป็น scan ที่พร้อมจับคู่</h3>
+              <ul>
+                <li>กรองระยะ LiDAR โดยใช้ช่วงประมาณ 2-40 เมตร เพื่อลด noise ใกล้ตัวรถและจุดไกลที่ไม่นิ่ง</li>
+                <li>แยก edge/surface feature แล้วใช้ IMU ช่วยแก้การบิดเบี้ยวของ scan ขณะรถเคลื่อนที่</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>2. สร้าง pose และ keyframe</h3>
+              <ul>
+                <li>scan-to-map optimization หาตำแหน่งรถในกรอบ <strong>map</strong></li>
+                <li>เพิ่ม keyframe เมื่อรถเคลื่อนที่พอสมควรหรือเลี้ยวชัดเจน เพื่อให้ map มีความละเอียดพอ</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>3. ปรับ map ให้แน่นขึ้น</h3>
+              <ul>
+                <li>เปิด loop closure เพื่อดึงปลายทางที่กลับมาซ้ำให้ตรงกับรอบก่อน</li>
+                <li>ใช้ GPS/RTK เป็น global anchor เมื่อ covariance ดีพอ ลด drift สะสมของเส้นทางยาว</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="stack">
+            <div class="map-visual" aria-label="ภาพจำลองเส้นทางและจุดแผนที่">
+              <div class="route"></div>
+              <div class="car"></div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>Voxel map</strong>
+                <span>downsample จุดให้ขนาดพอดี ใช้ leaf size ระดับ 0.15-0.2 เมตร</span>
+              </div>
+              <div class="metric">
+                <strong>Loop closure</strong>
+                <span>ตรวจจุดที่เคยผ่านแล้ว เพื่อดึง map ให้ปิดรอบได้ตรงขึ้น</span>
+              </div>
+              <div class="metric">
+                <strong>Dynamic removal</strong>
+                <span>ลบวัตถุชั่วคราวตอน save เช่น คน รถ หรือสิ่งที่ผ่านไปแล้ว</span>
+              </div>
+              <div class="metric">
+                <strong>Transient filter</strong>
+                <span>เก็บจุดที่ถูกเห็นหลาย keyframe เพื่อให้เหลือโครงสร้างถาวร</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <span>หลักคิด: วิ่งซ้ำเส้นเดิมช่วยให้ loop closure และ dynamic removal ทำงานดีขึ้น</span>
+          <span class="tag">หน้า 2/3</span>
+        </footer>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content">
+        <header>
+          <div class="eyebrow">การบันทึกและนำ map ไปใช้</div>
+          <h2>เมื่อกดบันทึก ระบบเรียก service ของ LIO-SAM แล้วเขียน GlobalMap.pcd ลงโฟลเดอร์ปลายทาง</h2>
+        </header>
+
+        <div class="main save-box">
+          <div class="stack">
+            <article class="panel">
+              <h3>คำสั่งที่ปุ่ม “บันทึกแผนที่” ใช้</h3>
+              <p>ใน RViz panel ปุ่มจะเรียก service <strong>/lio_sam/save_map</strong> พร้อมกำหนด resolution และ destination</p>
+              <div class="code">ros2 service call /lio_sam/save_map lio_sam/srv/SaveMap "{resolution: 0.2, destination: '~/Downloads/LOAM'}"</div>
+            </article>
+            <article class="panel">
+              <h3>ไฟล์ผลลัพธ์หลัก</h3>
+              <ul>
+                <li><strong>~/Downloads/LOAM/GlobalMap.pcd</strong> คือแผนที่ point cloud ที่นำไปใช้ localization</li>
+                <li>หลังจากนั้น stack ขับรถจะใช้ GlobalMap.pcd เป็นแผนที่อ้างอิงสำหรับ NDT localization และ publish pose ออกที่ <strong>/pcl_pose</strong></li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="warning">
+              <h3>ข้อควรระวังตอน save</h3>
+              <ul>
+                <li>map ระหว่างวิ่งอยู่ในหน่วยความจำ ถ้าหยุด LIO-SAM ก่อน save รอบนั้นจะหาย</li>
+                <li>service save จะลบโฟลเดอร์ปลายทางก่อนเขียนใหม่ จึงควรคัดลอก map เก่าออกถ้ายังต้องใช้</li>
+                <li>ถ้า <strong>savePCD: true</strong> อยู่ใน params ตอนปิด LIO-SAM อาจเขียน map ใหม่ทับโฟลเดอร์เดิม</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>Checklist หลังบันทึก</h3>
+              <ul>
+                <li>ตรวจว่า GlobalMap.pcd ถูกสร้างใหม่และขนาดไฟล์สมเหตุสมผล</li>
+                <li>เปิดดูใน RViz หรือเครื่องมือ PCD viewer ว่า map ไม่บิด ไม่ซ้อน และไม่มีวัตถุชั่วคราวมากเกินไป</li>
+                <li>ทดสอบ localization โดยรัน stack แล้วดูว่า <strong>/pcl_pose</strong> publish ได้ต่อเนื่อง</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <span>สรุป: วิ่งให้ครบเส้นทาง → ตรวจ map ใน RViz → กดบันทึก → สำรอง GlobalMap.pcd → ทดสอบ localization</span>
+          <span class="tag">หน้า 3/3</span>
+        </footer>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<library path="mapping_rviz_panel">
+  <class name="mapping_rviz_panel/MappingPanel"
+         type="mapping_rviz_panel::MappingPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      One button per mapping step (LiDAR, LIO-SAM, low level, GPS, NTRIP)
+      and one that saves the map with /lio_sam/save_map. Each step runs in its
+      own terminal window; its state comes from the process table. Open it with
+      mapping_panel.launch.py to get LIO-SAM's displays and the golf cart model
+      in the same window.
+    </description>
+  </class>
+</library>

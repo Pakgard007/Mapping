@@ -1,0 +1,152 @@
+/**:
+  ros__parameters:
+    use_sim_time: false
+
+    # Topics
+    pointCloudTopic: "/ouster/points"                   # Point cloud data
+    imuTopic: "/ouster/imu"                      # IMU data
+    odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
+    gpsTopic: "/ublox_gps_node/fix"              # raw sensor_msgs/NavSatFix from the u-blox driver, consumed by simpleGpsOdom
+    gpsOdomTopic: "/gps_odom"                    # ENU odometry published by simpleGpsOdom, consumed by mapOptimization
+    speedTopic: "/speed_status"                  # CAN wheel speed (std_msgs/Float64, m/s), fused into IMU velocity while moving and stationary
+
+    # Wheel-speed velocity update
+    zuptSpeedThreshold: 0.05                     # m/s, below this speed the vehicle is treated as stationary (zero-velocity update)
+    wheelSpeedVelNoise: 0.3                      # m/s, sigma for wheel-speed velocity prior while moving (looser than ZUPT to tolerate turns/slip)
+    wheelSpeedMinImuSpeed: 0.3                   # m/s, IMU-predicted speed must exceed this before its direction is trusted (avoids amplifying noisy direction right as the vehicle pulls away)
+    speedTimeout: 0.5                            # s, if no /speed_status within this window the encoder is treated as absent: ZUPT/wheel-speed priors are skipped and mapping falls back to plain LIO-SAM (prevents zero-velocity pinning when the CAN bridge is off)
+    # Frames
+    lidarFrame: "lidar_link"
+    baselinkFrame: "lidar_link"
+    odometryFrame: "odom"
+    mapFrame: "map"
+
+    # GPS Settings
+    useImuHeadingInitialization: false          # if using GPS data, set to "true"
+    useGpsElevation: false                       # if GPS elevation is bad, set to "false"
+    # ZED-F9P + NTRIP VRS corrections. Measured in RTK float: h_acc ~1.4 m
+    # (covariance ~1.9 m^2), and ~0.0001 m^2 once it reaches RTK fixed. That is
+    # far better than the ~10 m loop drift, so GPS is now a genuine global
+    # anchor. The factor noise uses the reported variance, so fixed/float/
+    # degraded fixes are weighted automatically; the threshold only rejects
+    # fixes too poor to help.
+    gpsCovThreshold: 9.0                         # m^2, accept up to ~3 m accuracy (covers RTK fixed + float + mild degradation), reject the ~10 m no-correction fixes
+    poseCovThreshold: 2.0                        # m^2, apply GPS once SLAM x/y variance exceeds ~1.4 m, i.e. as soon as GPS is competitive. Was 25.0 (GPS never engaged at all)
+    gpsHeadingInitDistance: 1.0                  # meters to travel before trusting initial GPS heading
+
+    # GPS/ENU -> map frame alignment. The 6-axis IMU gives the map frame no
+    # absolute heading, so it starts rotated relative to ENU by whatever
+    # direction the vehicle faced at t=0. GPS fixes are converted into the map
+    # frame using a transform solved from these many correspondences before any
+    # GPS factor is added, which removes the frame-mismatch teleport.
+    gpsAlignMinPairs: 15                         # correspondences needed before solving the transform
+    gpsAlignMinSpan: 25.0                        # m, samples must span at least this far or the rotation is not observable
+    gpsAlignPairSpacing: 2.0                     # m, minimum GPS travel between stored correspondences
+    gpsAlignMaxRms: 5.0                          # m, reject the solved transform if GPS still disagrees with SLAM by more than this
+    gpsMaxDisagreement: 15.0                     # m, drop an individual fix that disagrees with the SLAM pose by more than this (multipath / stale alignment)
+    gpsOffset: [0.0, 0.0, 0.0]                  # GPS antenna offset in lidar/base frame [forward, left, up] meters
+
+    # Export settings
+    savePCD: true                               # https://github.com/TixiaoShan/LIO-SAM/issues/3
+    savePCDDirectory: "/Downloads/LOAM/"         # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
+    transientFilterMinObservations: 3            # drop map points whose voxel was seen by fewer distinct keyframes (filters passing cars/people, keeps static structure)
+    transientFilterKeepMinFraction: 0.1          # safety: if the filter keeps <10% of points (e.g. poses scattered by a bad correction), keep the unfiltered cloud instead of saving an empty/incomplete map
+
+    # Ray-cast dynamic-object removal (applied at save time). Deletes points
+    # from things that were present at first but later left the scene: if the
+    # vehicle drives THROUGH a spot on a later pass (a laser return lands beyond
+    # it) that was a solid return earlier, whatever was there is gone. Requires
+    # revisiting the spot after the object leaves - hence driving repeated loops.
+    enableDynamicRemoval: true                   # set false to disable dynamic-object carving
+    dynamicVoxelSize: 0.2                         # m, occupancy voxel for the carving (smaller = finer but slower)
+    dynamicMaxRange: 30.0                         # m, do not carve along beams longer than this (far returns are noisy)
+    dynamicMinFree: 3                            # a voxel must be driven through this many times before it is carved (rejects stray beams)
+    dynamicTimeMargin: 5.0                       # s, the drive-through must be this long after the last solid return there (ensures it is a genuine later pass, not same-moment noise)
+
+    # Sensor Settings
+    sensor: ouster                               # lidar sensor type, either 'velodyne', 'ouster' or 'livox'
+    N_SCAN: 128                                   # number of lidar channels (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6)
+    Horizon_SCAN: 1024                            # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000)
+    downsampleRate: 1                            # default: 1. Downsample your data if too many
+    # points. i.e., 16 = 64 / 4, 16 = 16 / 1
+    lidarMinRange: 2.0                           # filters near-field leaf/branch clutter close to the sensor
+    lidarMaxRange: 40.0                          # short-range trail/road use case, drop far/noisy points to keep detail dense nearby
+
+    # IMU Settings
+    #imuAccNoise: 5.886e-04
+    #imuGyrNoise: 1.221e-04
+    #imuAccBiasN: 9.810e-05
+    #imuGyrBiasN: 3.878e-05
+    
+    #defult
+    imuAccNoise: 3.9939570888238808e-03  # Xsens calibrated (keep as reference)
+    imuGyrNoise: 1.5636343949698187e-03
+    imuAccBiasN: 6.4356659353532566e-05
+    imuGyrBiasN: 3.5640318696367613e-05
+    # Ouster IMU typical values (uncomment if drift persists):
+    # imuAccNoise: 0.01
+    # imuGyrNoise: 0.001
+    # imuAccBiasN: 0.0002
+    # imuGyrBiasN: 0.00003
+
+    #imuAccNoise: 5.9215155351791055e-03
+    #imuGyrNoise: 1.5059072284923697e-03
+    #imuAccBiasN: 1.3379378640306186e-04
+    #imuGyrBiasN: 4.3430855283551206e-05
+
+    imuGravity: 9.80511
+    imuRPYWeight: 0.05                           # increased: rely more on IMU when lidar features are unstable in foliage
+
+    extrinsicTrans:  [ 0.002, 0.010, -0.031 ]
+    extrinsicRot:    [-1.0,  0.0,  0.0,
+                       0.0,  -1.0,  0.0,
+                       0.0,  0.0, 1.0 ]
+    extrinsicRPY: [ -1.0,  0.0,  0.0,
+                    0.0,  -1.0,  0.0,
+                    0.0,  0.0,  1.0 ]
+
+    # LOAM feature threshold
+    edgeThreshold: 1.3                           # raised: filter unstable edges from thin branches, keep trunk-like edges
+    surfThreshold: 0.1
+    surfaceRejectThreshold: 0.5                  # reject mid-curvature noisy points (e.g. foliage) from leaking into surface cloud/map
+    frameJumpMaxTranslation: 8.0                 # m/s, reject scan-to-map result if it implies moving faster than this from the IMU-predicted pose (scaled by actual frame dt)
+    frameJumpMaxRotation: 4.0                    # rad/s, same but for rotation (roll/pitch/yaw), scaled by actual frame dt
+    edgeFeatureMinValidNum: 10
+    surfFeatureMinValidNum: 100
+
+    # voxel filter paprams
+    odometrySurfLeafSize: 0.2                    # finer voxel: short-range map, so trade far-field coverage for nearby detail
+    mappingCornerLeafSize: 0.15                  # finer voxel: keep more corner detail in the local map
+    mappingSurfLeafSize: 0.2                     # finer voxel: denser surf map improves alignment on narrow objects
+
+    # robot motion constraint (in case you are using a 2D robot)
+    z_tollerance: 0.5                             # meters
+    rotation_tollerance: 1000.0                   # radians
+
+    # CPU Params
+    numberOfCores: 16                              # number of cores for mapping optimization
+    mappingProcessInterval: 0.1                  # seconds, regulate mapping frequency
+
+    # Surrounding map
+    surroundingkeyframeAddingDistThreshold: 0.5  # balance keyframe density for multi-lap scenarios
+    surroundingkeyframeAddingAngleThreshold: 0.1  # radians, add keyframes sooner during turns
+    surroundingKeyframeDensity: 2.0               # meters, downsample surrounding keyframe poses   
+    surroundingKeyframeSearchRadius: 40.0         # meters, within n meters scan-to-map optimization (matched to the 40m lidarMaxRange)
+    # (when loop closure disabled)
+
+    # Loop closure
+    loopClosureEnableFlag: true
+    loopClosureFrequency: 2.0                     # Hz, regulate loop closure constraint add frequency
+    surroundingKeyframeSize: 30                   # submap size (when loop closure enabled)
+    historyKeyframeSearchRadius: 40.0             # meters, key frame that is within n meters from (widened: accumulated drift on closed loops was exceeding the old 20m radius, so no candidate was ever found)
+    # current pose will be considerd for loop closure
+    historyKeyframeSearchTimeDiff: 30.0           # seconds, key frame that is n seconds older will be
+    # considered for loop closure
+    historyKeyframeSearchNum: 50                  # number of hostory key frames will be fused into a
+    # submap for loop closure
+    historyKeyframeFitnessScore: 0.25             # icp threshold, the smaller the better alignment (loosened from 0.12: genuine loop closures on real closed-loop routes were being rejected; still below the 0.3 LIO-SAM default to limit false positives from repetitive tree patterns)
+
+    # Visualization
+    globalMapVisualizationSearchRadius: 1000.0    # meters, global map visualization radius (keep large: this bounds total map extent, not per-scan detail)
+    globalMapVisualizationPoseDensity: 2.0        # meters, global map visualization keyframe density (denser: finer map)
+    globalMapVisualizationLeafSize: 0.2           # meters, global map visualization cloud density (finer: less downsampling of exported points)
