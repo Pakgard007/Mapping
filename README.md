@@ -43,7 +43,7 @@ CAN (STM32, KEYA) ──► golfcart_low_level ──► /speed_status (คว�
 
 ```bash
 # ROS 2 Humble ต้องติดตั้งไว้ก่อน
-git clone git@github.com:PeeAppleS/3DMapping-INC31-KMUTT.git ~/1Mapping
+git clone git@github.com:Pakgard007/Mapping.git ~/1Mapping
 cd ~/1Mapping
 rosdep install --from-paths src --ignore-src -r -y
 sudo apt install -y python3-can can-utils python3-aenum   # สำหรับ golfcart_low_level
