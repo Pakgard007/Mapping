@@ -190,6 +190,17 @@ ros2 service call /lio_sam/save_map lio_sam/srv/SaveMap "{resolution: 0.2, desti
 
 ## 📍 ขั้นที่ 2 — Localization และขับรถอัตโนมัติ
 
+<table>
+  <tr>
+    <td width="50%"><img src="https://github.com/Pakgard007/Localize_get_path/blob/main/docs/rviz-chase.gif?raw=true" /></td>
+    <td width="50%"><img src="https://github.com/Pakgard007/ModRide/blob/main/docs/demo-live.gif?raw=true" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>RViz: สแกนสดทับแผนที่ระหว่างรถวิ่ง</sub></td>
+    <td align="center"><sub>เว็บ ModRide: ตำแหน่งรถสดบนแผนที่ มจธ.</sub></td>
+  </tr>
+</table>
+
 อยู่ใน repo **[Localize_get_path](https://github.com/Pakgard007/Localize_get_path)** — สรุปสั้นๆ:
 
 | ส่วน | หน้าที่ |
