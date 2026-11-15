@@ -12,6 +12,8 @@
 
 </div>
 
+> 🇬🇧 **English:** ROS 2 Humble workspace for building a geo-referenced 3D point cloud map of the KMUTT campus with an autonomous golf cart. LIO-SAM fuses an Ouster OS-1-128 LiDAR, IMU, u-blox ZED-F9R RTK GNSS (NTRIP) and CAN wheel speed; a custom RViz panel runs each step and saves the map. The map is then used by [Localize_get_path](https://github.com/Pakgard007/Localize_get_path) for NDT localization and path following, and shown live on the [ModRide](https://github.com/Pakgard007/ModRide) web map.
+
 ---
 
 ## 📚 งานทั้งหมดในโปรเจกต์
